@@ -155,8 +155,9 @@ port(
  input_2        : in std_logic_vector( 7 downto 0);
  input_3        : in std_logic_vector( 7 downto 0);
  input_4        : in std_logic_vector( 7 downto 0);
- 
+ output_4       : out std_logic_vector( 7 downto 0);
  mcr2p5         : in  std_logic;
+ hcntout           : out std_logic_vector( 9 downto 0);
 
  cpu_rom_addr   : out std_logic_vector(15 downto 0);
  cpu_rom_do     : in std_logic_vector(7 downto 0);
@@ -340,6 +341,7 @@ begin
 		if rising_edge(clock_vid) then
 			if pix_ena = '1' then
 		
+				hcntout <= hcnt;
 				hcnt <= hcnt + 1;
 				if hcnt = 633 then
 					hcnt <= (others=>'0');
@@ -874,7 +876,7 @@ port map(
  input_2 => input_2,
  input_3 => input_3,
  input_4 => input_4,
- 
+ output_4 => output_4,
  separate_audio => separate_audio,
  audio_out_l    => audio_out_l,
  audio_out_r    => audio_out_r,
