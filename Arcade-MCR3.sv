@@ -140,8 +140,6 @@ localparam CONF_STR = {
 	"O6,Audio,Mono,Stereo;",
     "OUV,Serial SNAC DB15,Off,1 Player,2 Players;",	
 	"-;",
-	"h1O7,Rotate,Buttons,Spinner;",
-	"h1-;",
 	"DIP;",
 	"-;",
 	"R0,Reset;",
@@ -186,6 +184,7 @@ wire [31:0] joy1_USB, joy2_USB;
 wire [31:0] joy1 = |status[31:30] ? {3'b000,joydb15_1[9],1'b0,joydb15_1[8],joydb15_1[11:10],joydb15_1[7:0]} : joy1_USB;
 wire [31:0] joy2 =  status[31]    ? {3'b000,joydb15_2[9],joydb15_2[8],1'b0,joydb15_2[11:10],joydb15_2[7:0]} : status[30] ? joy1_USB : joy2_USB;
 wire [31:0] joy = joy1 | joy2;
+wire  [8:0] sp1, sp2; 
 
 wire [21:0] gamma_bus;
 
@@ -226,6 +225,9 @@ hps_io #(.STRLEN($size(CONF_STR)>>3)) hps_io
 	.joystick_0(joy1_USB),
 	.joystick_1(joy2_USB),
 
+	.spinner_0(sp1),
+	.spinner_1(sp2),
+ 
 	.ps2_key(ps2_key)
 );
 
@@ -438,6 +440,20 @@ wire m_rccw    = m_rccw1  | m_rccw2;
 wire m_spccw   = m_spccw1 | m_spccw2;
 wire m_spcw    = m_spcw1  | m_spcw2;
 
+reg [8:0] sp;
+always @(posedge clk_sys) begin
+	reg [8:0] old_sp1, old_sp2;
+	reg       sp_sel = 0;
+
+	old_sp1 <= sp1;
+	old_sp2 <= sp2;
+	
+	if(old_sp1 != sp1) sp_sel <= 0;
+	if(old_sp2 != sp2) sp_sel <= 1;
+
+	sp <= sp_sel ? sp2 : sp1;
+end
+
 reg  [7:0] input_0;
 reg  [7:0] input_1;
 reg  [7:0] input_2;
@@ -499,15 +515,15 @@ always @(*) begin
 end
 
 wire [7:0] spin_tron;
-spinner #(10) spinner_tr
+spinner #(10,0,5) spinner_tr
 (
 	.clk(clk_sys),
 	.reset(reset),
 	.minus(m_rccw | m_spccw),
 	.plus(m_rcw | m_spcw),
 	.strobe(vs),
-	.use_spinner(status[7] | m_spccw | m_spcw),
-	.spin_angle(spin_tron)
+	.spin_in(sp),
+	.spin_out(spin_tron)
 );
 
 wire ce_pix;
